@@ -1,0 +1,11 @@
+{
+  "name": "vue-node-chat",
+  "version": "1.0.0",
+  "description": "客服会话管理系统",
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "dev": "npm run server"
+  }
+}
