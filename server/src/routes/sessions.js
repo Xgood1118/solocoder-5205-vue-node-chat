@@ -26,6 +26,12 @@ router.post('/', (req, res) => {
     sendNotification('new_session', { sessionId: session.id, customerName: session.customerName });
     res.status(201).json(session);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: '参数校验失败',
+        errors: error.errors || [error.message]
+      });
+    }
     res.status(400).json({ error: error.message });
   }
 });
@@ -121,20 +127,30 @@ router.post('/:id/transition', (req, res) => {
 });
 
 router.post('/:id/assign', (req, res) => {
-  const { assignee } = req.body;
-  const session = assignSession(req.params.id, assignee);
-  
-  if (!session) {
-    return res.status(404).json({ error: '会话不存在' });
+  try {
+    const { assignee } = req.body;
+    const session = assignSession(req.params.id, assignee);
+    
+    if (!session) {
+      return res.status(404).json({ error: '会话不存在' });
+    }
+    
+    sendNotification('assigned', {
+      sessionId: session.id,
+      assignee,
+      customerName: session.customerName
+    });
+    
+    res.json(session);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: '参数校验失败',
+        errors: error.errors || [error.message]
+      });
+    }
+    res.status(409).json({ error: error.message });
   }
-  
-  sendNotification('assigned', {
-    sessionId: session.id,
-    assignee,
-    customerName: session.customerName
-  });
-  
-  res.json(session);
 });
 
 router.post('/:id/transfer', (req, res) => {
@@ -184,11 +200,21 @@ router.post('/:id/reopen', (req, res) => {
 });
 
 router.post('/:id/messages', (req, res) => {
-  const message = addMessage(req.params.id, req.body);
-  if (!message) {
-    return res.status(404).json({ error: '会话不存在' });
+  try {
+    const message = addMessage(req.params.id, req.body);
+    if (!message) {
+      return res.status(404).json({ error: '会话不存在' });
+    }
+    res.status(201).json(message);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: '参数校验失败',
+        errors: error.errors || [error.message]
+      });
+    }
+    res.status(400).json({ error: error.message });
   }
-  res.status(201).json(message);
 });
 
 router.post('/:id/tags', (req, res) => {
